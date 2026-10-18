@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Orientación Normativa - UdeG</title>
+    <style>
+        :root {
+            --bg-canvas: #e9ecef;
+            --bg-chat: #f4f5f7;
+            --bg-panel: #ffffff;
+            --border-subtle: #d0d5dd;
+            --text-primary: #1a1a1a;
+            --text-secondary: #667085;
+            --text-muted: #98a2b3;
+            --msg-in-bg: #ffffff;
+            --msg-in-text: #1a1a1a;
+            --msg-in-border: #e4e7ec;
+            --msg-out-bg: #2d3139;
+            --msg-out-text: #ffffff;
+            --btn-dark: #2d3139;
+            --btn-dark-hover: #1f2227;
+            --pill-bg: #ffffff;
+            --pill-border: #d0d5dd;
+            --pill-hover: #e9ecef;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        body {
+            background-color: var(--bg-canvas);
+            color: var(--text-primary);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .telegram-layout {
+            width: 100%;
+            max-width: 980px;
+            height: 100vh;
+            background: var(--bg-panel);
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+            border-left: 1px solid var(--border-subtle);
+            border-right: 1px solid var(--border-subtle);
+        }
+
+        @media (min-height: 800px) and (min-width: 1024px) {
+            .telegram-layout {
+                height: 94vh;
+                border-radius: 12px;
+                overflow: hidden;
+                border: 1px solid var(--border-subtle);
+            }
+        }
+
+        /* Header */
+        .header {
+            height: 64px;
+            background: var(--bg-panel);
+            border-bottom: 1px solid var(--border-subtle);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            z-index: 10;
+        }
+
+        .header-profile {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+
+        .avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: #2d3139;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 15px;
+            letter-spacing: 0.5px;
+        }
+
+        .profile-info h1 {
+            font-size: 16px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .profile-info p {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-header {
+            background: transparent;
+            border: 1px solid var(--border-subtle);
+            color: var(--text-secondary);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-header:hover {
+            background: var(--bg-canvas);
+            color: var(--text-primary);
+        }
+
+        /* Chat Canvas */
+        .chat-container {
+            flex: 1;
+            background: var(--bg-chat);
+            overflow-y: auto;
+            padding: 20px 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            position: relative;
+        }
+
+        .date-divider {
+            align-self: center;
+            background: rgba(0, 0, 0, 0.08);
+            color: var(--text-secondary);
+            font-size: 12px;
+            font-weight: 600;
+            padding: 4px 12px;
+            border-radius: 12px;
+            margin: 6px 0 12px 0;
+            user-select: none;
+        }
+
+        /* Message Bubbles */
+        .message-row {
+            display: flex;
+            width: 100%;
+        }
+
+        .message-row.in {
+            justify-content: flex-start;
+        }
+
+        .message-row.out {
+            justify-content: flex-end;
+        }
+
+        .bubble {
+            max-width: 78%;
+            padding: 12px 16px;
+            font-size: 14.5px;
+            line-height: 1.5;
+            position: relative;
+            word-wrap: break-word;
+        }
+
+        .bubble.in {
+            background: var(--msg-in-bg);
+            color: var(--msg-in-text);
+            border: 1px solid var(--msg-in-border);
+            border-radius: 16px 16px 16px 4px;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+        }
+
+        .bubble.out {
+            background: var(--msg-out-bg);
+            color: var(--msg-out-text);
+            border-radius: 16px 16px 4px 16px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+        }
+
+        .bubble-meta {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 4px;
+            margin-top: 6px;
+            font-size: 11px;
+            user-select: none;
+        }
+
+        .bubble.in .bubble-meta {
+            color: var(--text-muted);
+        }
+
+        .bubble.out .bubble-meta {
+            color: rgba(255, 255, 255, 0.65);
+        }
+
+        /* Markdown formatting */
+        .bubble p {
+            margin-bottom: 8px;
+        }
+        .bubble p:last-child {
+            margin-bottom: 0;
+        }
+        .bubble ul, .bubble ol {
+            margin: 8px 0 8px 20px;
+        }
+        .bubble li {
+            margin-bottom: 4px;
+        }
+        .bubble strong {
+            font-weight: 600;
+        }
+        .bubble blockquote {
+            border-left: 3px solid #8e95a2;
+            padding-left: 10px;
+            margin: 8px 0;
+            color: #4b5563;
+        }
+        .bubble.out blockquote {
+            border-left-color: rgba(255, 255, 255, 0.5);
+            color: rgba(255, 255, 255, 0.85);
+        }
+
+        /* Quick Suggestions */
+        .suggestions-bar {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding: 8px 20px;
+            background: var(--bg-panel);
+            border-top: 1px solid var(--border-subtle);
+            scrollbar-width: none;
+        }
+        .suggestions-bar::-webkit-scrollbar {
+            display: none;
+        }
+
+        .pill {
+            background: var(--pill-bg);
+            border: 1px solid var(--pill-border);
+            color: var(--text-primary);
+            font-size: 12.5px;
+            font-weight: 500;
+            padding: 6px 14px;
+            border-radius: 16px;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.15s ease;
+        }
+
+        .pill:hover {
+            background: var(--pill-hover);
+            border-color: #98a2b3;
+        }
+
+        /* Input Area */
+        .input-bar {
+            background: var(--bg-panel);
+            border-top: 1px solid var(--border-subtle);
+            padding: 14px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .input-wrapper {
+            flex: 1;
+            background: var(--bg-canvas);
+            border: 1px solid var(--border-subtle);
+            border-radius: 22px;
+            display: flex;
+            align-items: center;
+            padding: 4px 16px;
+            transition: border-color 0.15s ease;
+        }
+
+        .input-wrapper:focus-within {
+            border-color: #667085;
+            background: #ffffff;
+        }
+
+        .input-field {
+            width: 100%;
+            border: none;
+            outline: none;
+            background: transparent;
+            font-size: 14.5px;
+            color: var(--text-primary);
+            resize: none;
+            max-height: 120px;
+            padding: 8px 0;
+            line-height: 1.4;
+        }
+
+        .input-field::placeholder {
+            color: var(--text-muted);
+        }
+
+        .send-btn {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: var(--btn-dark);
+            border: none;
+            color: #ffffff;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.15s ease, transform 0.1s ease;
+            flex-shrink: 0;
+        }
+
+        .send-btn:hover {
+            background: var(--btn-dark-hover);
+        }
+
+        .send-btn:active {
+            transform: scale(0.96);
+        }
+
+        .send-btn svg {
+            width: 18px;
+            height: 18px;
+            fill: currentColor;
+            margin-left: 2px;
+        }
+
+        /* Typing indicator */
+        .typing-indicator {
+            display: none;
+            align-items: center;
+            gap: 4px;
+            padding: 8px 14px;
+            background: var(--msg-in-bg);
+            border: 1px solid var(--msg-in-border);
+            border-radius: 14px;
+            width: fit-content;
+        }
+
+        .typing-dot {
+            width: 6px;
+            height: 6px;
+            background: var(--text-muted);
+            border-radius: 50%;
+            animation: bounce 1.3s infinite ease-in-out;
+        }
+
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes bounce {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-4px); }
+        }
+
+        /* Toast notification */
+        .status-toast {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #2d3139;
+            color: #ffffff;
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: none;
+            z-index: 1000;
+        }
+
+        /* Modal Overlay */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.45);
+            backdrop-filter: blur(4px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 500;
+        }
+
+        .modal-card {
+            background: #ffffff;
+            width: 90%;
+            max-width: 440px;
+            border-radius: 12px;
+            border: 1px solid var(--border-subtle);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .modal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .modal-header h2 {
+            font-size: 17px;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .modal-close {
+            background: transparent;
+            border: none;
+            font-size: 20px;
+            cursor: pointer;
+            color: var(--text-secondary);
+            line-height: 1;
+        }
+
+        .modal-body p {
+            font-size: 13.5px;
+            line-height: 1.5;
+            color: var(--text-secondary);
+            margin-bottom: 12px;
+        }
+
+        .modal-input {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid var(--border-subtle);
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: monospace;
+            outline: none;
+            background: #f9fafb;
+            color: var(--text-primary);
+        }
+
+        .modal-input:focus {
+            border-color: #667085;
+            background: #ffffff;
+        }
+
+        .modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 4px;
+        }
+
+        .btn-modal-secondary {
+            background: transparent;
+            border: 1px solid var(--border-subtle);
+            color: var(--text-secondary);
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-size: 13.5px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .btn-modal-primary {
+            background: var(--btn-dark);
+            color: #ffffff;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 8px;
+            font-size: 13.5px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+
+        .btn-modal-primary:hover {
+            background: var(--btn-dark-hover);
+        }
+    </style>
+</head>
+<body>
+
+<div class="status-toast" id="statusToast">Notificación</div>
+
+<!-- Modal para Configurar Clave de API -->
+<div class="modal-overlay" id="apiKeyModal">
+    <div class="modal-card">
+        <div class="modal-header">
+            <h2>Configuración de Clave API</h2>
+            <button class="modal-close" onclick="cerrarModalApiKey()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <p>Para activar el motor de consulta normativa en tiempo real, ingresa tu clave de API de Google Gemini. Esta clave se almacenará de manera local en tu archivo <code>.env</code>.</p>
+            <input type="password" class="modal-input" id="apiKeyInput" placeholder="Pega tu clave GOOGLE_API_KEY aquí...">
+        </div>
+        <div class="modal-footer">
+            <button class="btn-modal-secondary" onclick="cerrarModalApiKey()">Cancelar</button>
+            <button class="btn-modal-primary" onclick="guardarClaveApiKey()">Guardar y Conectar</button>
+        </div>
+    </div>
+</div>
+
+<div class="telegram-layout">
+    <!-- Header -->
+    <header class="header">
+        <div class="header-profile">
+            <div class="avatar">UDG</div>
+            <div class="profile-info">
+                <h1>Orientación Normativa UdeG</h1>
+                <p>Relaciones con la Autoridad · Convivencia Institucional</p>
+            </div>
+        </div>
+        <div class="header-actions">
+            <button class="btn-header" onclick="abrirModalApiKey()" title="Configurar o actualizar Clave API">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="7.5" cy="15.5" r="5.5"/>
+                    <path d="m21 2-9.6 9.6M15.5 7.5l3 3M18.5 4.5l3 3"/>
+                </svg>
+                Clave API
+            </button>
+            <button class="btn-header" onclick="reindexarDocumentos()" title="Actualizar base de datos con nuevos reglamentos">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+                </svg>
+                Actualizar Base
+            </button>
+            <button class="btn-header" onclick="limpiarChat()" title="Limpiar conversación">
+                Limpiar
+            </button>
+        </div>
+    </header>
+
+    <!-- Chat Messages -->
+    <div class="chat-container" id="chatContainer">
+        <div class="date-divider">Sesión de Consulta</div>
+
+        <div class="message-row in">
+            <div class="bubble in">
+                <p><strong>Orientación y Convivencia Normativa Institucional · UdeG</strong></p>
+                <p>Bienvenido. Este espacio brinda orientación confidencial sobre relaciones con la autoridad, prevención de conflicto de interés y protección de tus derechos académicos.</p>
+                <p>Te guiaremos paso a paso de forma clara y accesible. Puedes plantear tu situación directamente o elegir una de las consultas frecuentes abajo. También podemos canalizarte con profesores orientadores y enlaces de apoyo de tu centro.</p>
+                <div class="bubble-meta">
+                    <span id="initialTime">12:00</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="typing-indicator" id="typingIndicator">
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+            <div class="typing-dot"></div>
+        </div>
+    </div>
+
+    <!-- Quick Suggestions -->
+    <div class="suggestions-bar">
+        <button class="pill" onclick="enviarSugerencia('¿Quién es la persona encargada y dónde la encuentro en CUTonalá?')">Encargado y Ubicación</button>
+        <button class="pill" onclick="enviarSugerencia('¿Cuáles son las vías de contacto oficiales para atender mi caso?')">Vías de contacto</button>
+        <button class="pill" onclick="enviarSugerencia('¿En qué consiste el programa institucional de atención y protección?')">En qué consiste el programa</button>
+        <button class="pill" onclick="enviarSugerencia('¿Cómo se justifica la relación entre mi caso y el programa institucional?')">Justificación del caso</button>
+        <button class="pill" onclick="enviarSugerencia('¿Qué asesoría y apoyo adicional me brinda la Coordinadora de Carrera?')">Asesoría con Coordinadora</button>
+        <button class="pill" onclick="enviarSugerencia('Tengo una relación con el profesor de mi clase actual, ¿qué procede?')">Relación con profesor</button>
+        <button class="pill" onclick="enviarSugerencia('Terminé con un profesor y temo represalias en mis calificaciones')">Ruptura y represalias</button>
+        <button class="pill" onclick="enviarSugerencia('¿Cómo redactar un oficio para pedir cambio de sinodal por conflicto de interés?')">Plantilla de oficio</button>
+    </div>
+
+    <!-- Input Bar -->
+    <div class="input-bar">
+        <div class="input-wrapper">
+            <textarea class="input-field" id="userInput" placeholder="Escribe tu consulta normativa aquí..." rows="1" onkeydown="handleKeyDown(event)"></textarea>
+        </div>
+        <button class="send-btn" id="sendBtn" onclick="enviarMensaje()" title="Enviar mensaje">
+            <svg viewBox="0 0 24 24">
+                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path>
+            </svg>
+        </button>
+    </div>
+</div>
+
+<script>
+    function formatearHora(date = new Date()) {
+        const h = String(date.getHours()).padStart(2, '0');
+        const m = String(date.getMinutes()).padStart(2, '0');
+        return `${h}:${m}`;
+    }
+
+    document.getElementById('initialTime').textContent = formatearHora();
+
+    function autoResizeTextarea() {
+        const textarea = document.getElementById('userInput');
+        textarea.style.height = 'auto';
+        textarea.style.height = Math.min(textarea.scrollHeight, 120) + 'px';
+    }
+
+    document.getElementById('userInput').addEventListener('input', autoResizeTextarea);
+
+    function handleKeyDown(event) {
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
+            enviarMensaje();
+        }
+    }
+
+    function parseMarkdown(text) {
+        if (!text) return '';
+        let escaped = text
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+
+        escaped = escaped.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+        escaped = escaped.replace(/\*(.*?)\*/g, '<em>$1</em>');
+        
+        const lines = escaped.split('\n');
+        let html = '';
+        let inList = false;
+
+        for (let line of lines) {
+            line = line.trim();
+            if (line.startsWith('* ') || line.startsWith('- ')) {
+                if (!inList) { html += '<ul>'; inList = true; }
+                html += `<li>${line.substring(2)}</li>`;
+            } else if (/^\d+\.\s/.test(line)) {
+                if (!inList) { html += '<ol>'; inList = true; }
+                html += `<li>${line.replace(/^\d+\.\s/, '')}</li>`;
+            } else {
+                if (inList) { html += inList === true ? '</ul>' : '</ol>'; inList = false; }
+                if (line.length > 0) {
+                    html += `<p>${line}</p>`;
+                }
+            }
+        }
+        if (inList) html += '</ul>';
+        return html;
+    }
+
+    function scrollBottom() {
+        const chat = document.getElementById('chatContainer');
+        chat.scrollTop = chat.scrollHeight;
+    }
+
+    function appendMessage(sender, text) {
+        const chat = document.getElementById('chatContainer');
+        const typing = document.getElementById('typingIndicator');
+
+        const row = document.createElement('div');
+        row.className = `message-row ${sender}`;
+
+        const bubble = document.createElement('div');
+        bubble.className = `bubble ${sender}`;
+
+        if (sender === 'in') {
+            bubble.innerHTML = parseMarkdown(text);
+        } else {
+            const p = document.createElement('p');
+            p.textContent = text;
+            bubble.appendChild(p);
+        }
+
+        const meta = document.createElement('div');
+        meta.className = 'bubble-meta';
+        meta.innerHTML = `<span>${formatearHora()}</span>` + (sender === 'out' ? ' <span>✓✓</span>' : '');
+        bubble.appendChild(meta);
+
+        row.appendChild(bubble);
+        chat.insertBefore(row, typing);
+        scrollBottom();
+    }
+
+    async function enviarMensaje() {
+        const input = document.getElementById('userInput');
+        const query = input.value.trim();
+        if (!query) return;
+
+        appendMessage('out', query);
+        input.value = '';
+        input.style.height = 'auto';
+
+        const typing = document.getElementById('typingIndicator');
+        typing.style.display = 'flex';
+        scrollBottom();
+
+        try {
+            const response = await fetch('/api/consulta', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ mensaje: query })
+            });
+            const data = await response.json();
+            typing.style.display = 'none';
+
+            if (data.requiere_clave) {
+                appendMessage('in', data.error);
+                abrirModalApiKey();
+                return;
+            }
+
+            if (data.respuesta) {
+                appendMessage('in', data.respuesta);
+            } else if (data.error) {
+                appendMessage('in', `Aviso de Sistema: ${data.error}`);
+            }
+        } catch (err) {
+            typing.style.display = 'none';
+            appendMessage('in', 'No fue posible conectar con el servidor local. Verifique que el servicio esté ejecutándose.');
+        }
+    }
+
+    function enviarSugerencia(texto) {
+        document.getElementById('userInput').value = texto;
+        enviarMensaje();
+    }
+
+    function limpiarChat() {
+        const chat = document.getElementById('chatContainer');
+        const rows = chat.querySelectorAll('.message-row');
+        rows.forEach((r, idx) => {
+            if (idx > 0) r.remove();
+        });
+    }
+
+    function mostrarToast(msg) {
+        const toast = document.getElementById('statusToast');
+        toast.textContent = msg;
+        toast.style.display = 'block';
+        setTimeout(() => { toast.style.display = 'none'; }, 3500);
+    }
+
+    async function reindexarDocumentos() {
+        mostrarToast('Actualizando acervo documental en base de datos...');
+        try {
+            const res = await fetch('/api/reindexar', { method: 'POST' });
+            const data = await res.json();
+            if (data.status === 'ok') {
+                mostrarToast('Base de datos actualizada con éxito.');
+                appendMessage('in', 'Se ha completado la reindexación de los documentos normativos de la carpeta conocimientos/.');
+            } else {
+                mostrarToast(`Error: ${data.mensaje}`);
+            }
+        } catch (e) {
+            mostrarToast('Error al comunicar con el servidor.');
+        }
+    }
+
+    /* Modal API Key Control */
+    function abrirModalApiKey() {
+        document.getElementById('apiKeyModal').style.display = 'flex';
+        document.getElementById('apiKeyInput').focus();
+    }
+
+    function cerrarModalApiKey() {
+        document.getElementById('apiKeyModal').style.display = 'none';
+    }
+
+    async function guardarClaveApiKey() {
+        const input = document.getElementById('apiKeyInput');
+        const clave = input.value.trim();
+        if (!clave) {
+            mostrarToast('Por favor, ingresa una clave válida.');
+            return;
+        }
+
+        mostrarToast('Guardando y validando clave...');
+        try {
+            const res = await fetch('/api/configurar_clave', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ clave: clave })
+            });
+            const data = await res.json();
+            if (data.status === 'ok') {
+                mostrarToast('Clave configurada exitosamente.');
+                cerrarModalApiKey();
+                appendMessage('in', 'Clave de API registrada correctamente. El motor de consulta normativa se encuentra activo y listo.');
+            } else {
+                mostrarToast(`Error: ${data.mensaje}`);
+            }
+        } catch (e) {
+            mostrarToast('Error de conexión al guardar la clave.');
+        }
+    }
+
+    /* Verificar si ya existe clave al cargar */
+    window.addEventListener('DOMContentLoaded', async () => {
+        try {
+            const res = await fetch('/api/estado');
+            const data = await res.json();
+            if (!data.tiene_clave) {
+                abrirModalApiKey();
+            }
+        } catch (e) {}
+    });
+</script>
+
+</body>
+</html>
